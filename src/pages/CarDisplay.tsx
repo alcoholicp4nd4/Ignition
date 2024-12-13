@@ -1,52 +1,64 @@
-import React, { useRef } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { Mesh } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { OrbitControls } from '@react-three/drei';
+import React, { useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 
-const CarDisplay = () => {
-  const carRef = useRef<Mesh>(null);
-  const carModel = useLoader(GLTFLoader, '/public/models/2020_chevrolet_corvette_c8.r.glb'); // Update with the path to your car model
+function Background() {
+  const { scene } = useGLTF("/models/garage.glb"); // Load the background model
 
-  // Rotate the car model
-  useFrame((state, delta) => {
-    if (carRef.current) {
-      carRef.current.rotation.y += delta * 0.5;
+  return (
+    <primitive
+      object={scene}
+      scale={[120, 150, 120]} // Scale the background as needed
+      position={[0, 100, 0]} // Position the background behind the car
+    />
+  );
+}
+
+function Car({ color }) {
+  const carRef = useRef();
+  const { scene } = useGLTF("/models/nigga.glb"); // Load the car model
+  // Change car color dynamically
+  scene.traverse((child) => {
+    if (child.isMesh) {
+      child.material.color.set(color);
     }
   });
 
   return (
     <primitive
+      object={scene}
       ref={carRef}
-      object={carModel?.scene}
-      scale={[200, 200, 200]} // Adjust scale if needed
+      scale={[6000, 6000, 6000]} // Scale the car model
+      position={[0, 0, 0]} // Center the car in the scene
+      rotation={[0, Math.PI / 2, 0]} // Rotate 90 degrees on the Y-axis
     />
   );
-};
+}
 
-const CarDisplayCanvas = () => (
-  <div
-    className="flex justify-center items-center w-full h-screen bg-gray-100"
-    style={{
-      overflow: 'hidden',
-    }}
-  >
-    <Canvas
-      className="w-full h-full"
-      style={{
-        height: '90vh', // Covers most of the viewport height
-      }}
-    >
-      <OrbitControls
-        maxPolarAngle={Math.PI / 2}
-        minPolarAngle={Math.PI / 2}
-        enableZoom={true} // Allow zooming in and out
-      />
-      <ambientLight intensity={0.8} />
-      <pointLight position={[10, 500, 10]} />
-      <CarDisplay />
-    </Canvas>
-  </div>
-);
+function App() {
+  const [color, setColor] = useState("#ffffff"); // Default color: White
 
-export default CarDisplayCanvas;
+  return (
+    <div style={{ height: "100vh", width: "100vw" }}>
+      <Canvas>
+        <ambientLight intensity={0.5} />
+        <pointLight position={[100, 100, 100]} />
+        <Background /> {/* Render the background */}
+        <Car color={color} /> {/* Render the car */}
+        <OrbitControls enableZoom={true} /> {/* Enable camera rotation */}
+      </Canvas>
+      {/* Color Picker */}
+      <div style={{ position: "absolute", top: 100, left: 100 }}>
+        <label>Car color:</label>
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default App;
